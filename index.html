@@ -177,4 +177,259 @@
     <div class="life-grid" id="gridContainer"></div>
 
     <div class="legend">
-        <span><span class="dot" style="background:var(--mood-
+        <span><span class="dot" style="background:var(--mood-happy)"></span>开心</span>
+        <span><span class="dot" style="background:var(--mood-hard)"></span>艰难</span>
+        <span><span class="dot" style="background:var(--grid-past)"></span>平淡</span>
+        <span><span class="dot" style="border:1px solid #ccc"></span>未来</span>
+    </div>
+</div>
+
+<div class="modal" id="noteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">第 X 周</h3>
+            <div class="week-date-range" id="weekDateRange">202X年X月X日 - X月X日</div>
+        </div>
+        
+        <div class="modal-body">
+            <div class="section-title">📅 每日记录 (Daily)</div>
+            <div class="daily-list" id="dailyList">
+                </div>
+
+            <div class="section-title">📝 本周总结 (Summary)</div>
+            <textarea id="weekNote" class="summary-input" placeholder="这周的整体感受是..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <div class="mood-selector">
+                <label style="cursor:pointer;"><input type="radio" name="mood" value="normal" checked> ☁️ 平淡</label>
+                <label style="cursor:pointer;"><input type="radio" name="mood" value="happy"> ☀️ 开心</label>
+                <label style="cursor:pointer;"><input type="radio" name="mood" value="hard"> 🌧️ 艰难</label>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveWeekData()">保存记录</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const TOTAL_YEARS = 100;
+    const WEEKS_PER_YEAR = 52;
+    const TOTAL_WEEKS = TOTAL_YEARS * WEEKS_PER_YEAR;
+
+    const dobInput = document.getElementById('dobInput');
+    const gridContainer = document.getElementById('gridContainer');
+    const modal = document.getElementById('noteModal');
+    let currentSelectedWeek = null;
+
+    // 数据结构升级：
+    // V1: { note: "text", mood: "happy" }
+    // V2: { summary: "text", mood: "happy", days: ["day1 text", "day2 text"...] }
+    let lifeData = JSON.parse(localStorage.getItem('lifeData')) || {};
+
+    function init() {
+        const savedDob = localStorage.getItem('lifeDob');
+        if (savedDob) {
+            dobInput.value = savedDob;
+            renderLife();
+        }
+        dobInput.addEventListener('change', () => {
+            localStorage.setItem('lifeDob', dobInput.value);
+            renderLife();
+        });
+    }
+
+    // 格式化日期辅助函数
+    function formatDate(date) {
+        return `${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+
+    function getLifeMessage(hour) {
+        if (hour < 6) return "人生还在凌晨";
+        if (hour < 9) return "早上好，去探索吧";
+        if (hour < 12) return "精力充沛的上午";
+        if (hour < 14) return "光辉时刻";
+        if (hour < 18) return "收获的季节";
+        if (hour < 22) return "傍晚的智慧";
+        return "深夜的繁星";
+    }
+
+    function renderLife() {
+        const dob = new Date(dobInput.value);
+        if (isNaN(dob.getTime())) return;
+
+        const now = new Date();
+        const diffTime = now - dob;
+        const daysLived = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const weeksLived = Math.floor(daysLived / 7);
+        
+        // 仪表盘数据更新
+        document.getElementById('dashboard').style.display = 'grid';
+        document.getElementById('daysLived').innerText = daysLived.toLocaleString();
+        document.getElementById('weeksLived').innerText = `${weeksLived.toLocaleString()} / ${TOTAL_WEEKS.toLocaleString()}`;
+        document.getElementById('progressPct').innerText = ((weeksLived / TOTAL_WEEKS) * 100).toFixed(2) + '%';
+
+        // 人生时钟
+        const lifePercentage = daysLived / (TOTAL_YEARS * 365.25);
+        const totalMinutesInDay = 24 * 60;
+        const currentLifeMinutes = totalMinutesInDay * lifePercentage;
+        const clockHour = Math.floor(currentLifeMinutes / 60);
+        const clockMinute = Math.floor(currentLifeMinutes % 60);
+        document.getElementById('lifeClock').innerText = `${String(clockHour).padStart(2, '0')}:${String(clockMinute).padStart(2, '0')}`;
+        document.getElementById('clockMsg').innerText = getLifeMessage(clockHour);
+
+        // 绘制网格
+        gridContainer.innerHTML = '';
+        for (let i = 0; i < TOTAL_WEEKS; i++) {
+            const div = document.createElement('div');
+            div.classList.add('week-box');
+            
+            if (i < weeksLived) {
+                div.classList.add('past');
+                const data = lifeData[i];
+                if (data) {
+                    if (data.mood === 'happy') div.classList.add('happy');
+                    if (data.mood === 'hard') div.classList.add('hard');
+                    
+                    // 悬停显示：优先显示总结，没有总结则显示第一天的记录
+                    let tip = data.summary || data.note || '无总结';
+                    if (data.days) {
+                         // 简单的计数提示
+                        const filledDays = Object.values(data.days).filter(t => t).length;
+                        if(filledDays > 0) tip += ` (${filledDays}天有记录)`;
+                    }
+                    div.title = tip;
+                }
+            }
+            
+            div.onclick = () => openModal(i);
+            gridContainer.appendChild(div);
+        }
+    }
+
+    // 打开高级弹窗
+    function openModal(weekIndex) {
+        currentSelectedWeek = weekIndex;
+        const year = Math.floor(weekIndex / 52);
+        const weekNum = (weekIndex % 52) + 1;
+        
+        // 1. 计算这周的日期范围
+        const dob = new Date(dobInput.value);
+        // 这周的开始日期 = 生日 + 周数 * 7天
+        const weekStartDate = new Date(dob.getTime() + (weekIndex * 7 * 24 * 60 * 60 * 1000));
+        const weekEndDate = new Date(weekStartDate.getTime() + (6 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modalTitle').innerText = `${year}岁 · 第 ${weekNum} 周`;
+        document.getElementById('weekDateRange').innerText = 
+            `${weekStartDate.getFullYear()}年${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
+
+        // 2. 准备数据
+        // 兼容V1旧数据：如果只有 note，把它放进 summary
+        let data = lifeData[weekIndex] || { summary: '', mood: 'normal', days: {} };
+        if (data.note && !data.summary) {
+            data.summary = data.note;
+        }
+
+        // 3. 生成7天的输入框
+        const dailyList = document.getElementById('dailyList');
+        dailyList.innerHTML = ''; // 清空旧的
+        
+        for (let d = 0; d < 7; d++) {
+            const currentDayDate = new Date(weekStartDate.getTime() + (d * 24 * 60 * 60 * 1000));
+            const dayStr = formatDate(currentDayDate);
+            const dayValue = (data.days && data.days[d]) ? data.days[d] : '';
+            
+            const row = document.createElement('div');
+            row.classList.add('day-row');
+            row.innerHTML = `
+                <div class="day-label">Day ${d+1} <br><span style="font-size:10px;color:#ccc">${dayStr}</span></div>
+                <input type="text" class="day-input" id="dayInput_${d}" value="${dayValue}" placeholder="记录这一天...">
+            `;
+            dailyList.appendChild(row);
+        }
+
+        // 4. 填充总结和情绪
+        document.getElementById('weekNote').value = data.summary || '';
+        const radios = document.getElementsByName('mood');
+        for (let r of radios) {
+            r.checked = (r.value === data.mood);
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    function saveWeekData() {
+        // 1. 获取周总结
+        const summary = document.getElementById('weekNote').value;
+        
+        // 2. 获取情绪
+        const radios = document.getElementsByName('mood');
+        let mood = 'normal';
+        for (let r of radios) {
+            if (r.checked) mood = r.value;
+        }
+
+        // 3. 获取7天的记录
+        let days = {};
+        for (let d = 0; d < 7; d++) {
+            const val = document.getElementById(`dayInput_${d}`).value;
+            if (val.trim()) {
+                days[d] = val;
+            }
+        }
+
+        // 保存
+        lifeData[currentSelectedWeek] = { summary, mood, days };
+        localStorage.setItem('lifeData', JSON.stringify(lifeData));
+        
+        closeModal();
+        renderLife();
+    }
+
+    // 备份与恢复（保持不变，但为了完整性再次包含）
+    function exportData() {
+        const dob = localStorage.getItem('lifeDob');
+        if (!dob) { alert('请先设置出生日期'); return; }
+        const exportObj = { version: "2.0", dob: dob, records: lifeData, date: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `life_backup_v2_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function triggerImport() { document.getElementById('importFile').click(); }
+
+    function importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (confirm('确定覆盖当前记录吗？')) {
+                    if(data.dob) localStorage.setItem('lifeDob', data.dob);
+                    if(data.records) {
+                        lifeData = data.records;
+                        localStorage.setItem('lifeData', JSON.stringify(lifeData));
+                    }
+                    location.reload();
+                }
+            } catch (err) { alert('文件格式错误'); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+
+    window.onclick = function(event) { if (event.target == modal) closeModal(); }
+    init();
+</script>
+
+</body>
+</html>
