@@ -1,235 +1,259 @@
-!DOCTYPE html
-html lang=zh-CN
-head
-    meta charset=UTF-8
-    meta name=viewport content=width=device-width, initial-scale=1.0
-    title我的百岁人生 - Life Gridtitle
-    style
-        root {
-            --bg-color #f5f7fa;
-            --grid-past #e0e0e0;      过去日子的默认颜色 
-            --grid-future #ffffff;    未来的颜色 
-            --grid-border #dcdcdc;
-            --mood-happy #ffd700;     开心：黄色 
-            --mood-hard #808080;      艰难：深灰 
-            --mood-normal #e0e0e0;    平淡：默认灰 
-            --text-primary #2c3e50;
-            --accent-color #3498db;
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的百岁人生 - Life Grid V1.2 (含备份)</title>
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --grid-past: #e0e0e0;     
+            --grid-future: #ffffff;   
+            --grid-border: #e8e8e8;
+            --mood-happy: #f1c40f;    /* 亮黄色 */
+            --mood-hard: #7f8c8d;     /* 沉稳灰 */
+            --text-primary: #2c3e50;
+            --accent-color: #3498db;
         }
 
         body {
-            font-family 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color var(--bg-color);
-            color var(--text-primary);
-            margin 0;
-            padding 20px;
-            display flex;
-            flex-direction column;
-            align-items center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .container {
-            max-width 1000px;
-            width 100%;
-            background white;
-            padding 30px;
-            border-radius 12px;
-            box-shadow 0 4px 20px rgba(0,0,0,0.05);
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
-         头部区域 
-        header {
-            text-align center;
-            margin-bottom 40px;
+        /* 头部与控制区 */
+        header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            position: relative;
+        }
+        h1 { font-weight: 300; letter-spacing: 3px; color: #34495e; margin-bottom: 5px; }
+        .subtitle { font-size: 14px; color: #95a5a6; margin-bottom: 25px; }
+
+        .controls-wrapper {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
         }
 
-        h1 { margin 0 0 10px 0; font-weight 300; letter-spacing 2px; }
-        
         .config-area {
-            margin-top 20px;
-            display flex;
-            justify-content center;
-            align-items center;
-            gap 10px;
+            display: inline-flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 50px;
+            gap: 10px;
+            border: 1px solid #eee;
         }
 
-        input[type=date] {
-            padding 8px;
-            border 1px solid #ddd;
-            border-radius 4px;
-            font-size 14px;
+        .data-btn {
+            padding: 8px 15px;
+            border-radius: 50px;
+            border: 1px solid #eee;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .data-btn:hover { background: #f0f0f0; color: #333; }
+
+        input[type="date"] {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #555;
+            font-family: inherit;
         }
 
-         仪表盘 
+        /* 仪表盘 */
         .dashboard {
-            display grid;
-            grid-template-columns repeat(auto-fit, minmax(200px, 1fr));
-            gap 20px;
-            margin-bottom 40px;
-            text-align center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fbfbfb;
+            border-radius: 12px;
+            border: 1px solid #eee;
         }
 
-        .stat-card {
-            background #f8f9fa;
-            padding 20px;
-            border-radius 8px;
-        }
-        
-        .stat-value { font-size 24px; font-weight bold; color var(--text-primary); }
-        .stat-label { font-size 12px; color #7f8c8d; margin-top 5px; }
-        .highlight { color var(--accent-color); }
+        .stat-card { text-align: center; padding: 15px 10px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+        .stat-label { font-size: 12px; color: #95a5a6; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .highlight-clock { color: var(--accent-color); }
+        .clock-msg { font-size: 13px; color: #7f8c8d; margin-top: 8px; font-style: italic; min-height: 20px; }
 
-         网格核心区 
+        /* 网格 */
         .life-grid {
-            display grid;
-             52列代表一年52周 
-            grid-template-columns repeat(52, 1fr); 
-            gap 3px;
-            margin-top 20px;
+            display: grid;
+            grid-template-columns: repeat(52, 1fr); 
+            gap: 3px;
+            margin-top: 20px;
         }
 
-         每一个小方格 
         .week-box {
-            aspect-ratio 1;
-            background-color var(--grid-future);
-            border 1px solid var(--grid-border);
-            border-radius 2px;
-            cursor pointer;
-            position relative;
-            transition transform 0.1s;
+            aspect-ratio: 1;
+            background-color: var(--grid-future);
+            border: 1px solid var(--grid-border);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .week-boxhover { transform scale(1.5); z-index 10; border-color #999; }
+        .week-box.past { background-color: var(--grid-past); border-color: transparent; }
+        .week-box.happy { background-color: var(--mood-happy); }
+        .week-box.hard { background-color: var(--mood-hard); }
         
-         状态样式 
-        .week-box.past { background-color var(--grid-past); border-color transparent; }
-        .week-box.happy { background-color var(--mood-happy); }
-        .week-box.hard { background-color var(--mood-hard); }
+        .week-box:hover { 
+            transform: scale(1.8); 
+            z-index: 10; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border-color: #666;
+        }
 
-         弹窗样式 
+        /* 弹窗 */
         .modal {
-            display none;
-            position fixed;
-            top 0; left 0; width 100%; height 100%;
-            background rgba(0,0,0,0.5);
-            justify-content center;
-            align-items center;
-            z-index 1000;
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.4);
+            backdrop-filter: blur(2px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
         .modal-content {
-            background white;
-            padding 30px;
-            border-radius 12px;
-            width 90%;
-            max-width 400px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
-        .modal h3 { margin-top 0; }
         
         textarea {
-            width 100%;
-            height 100px;
-            margin 15px 0;
-            padding 10px;
-            border 1px solid #ddd;
-            border-radius 4px;
-            resize vertical;
+            width: 100%; height: 100px;
+            margin: 15px 0; padding: 12px;
+            border: 1px solid #eee; border-radius: 8px;
+            font-family: inherit; resize: none;
+            box-sizing: border-box;
         }
+        textarea:focus { outline: none; border-color: var(--accent-color); }
 
-        .emotion-selector {
-            display flex;
-            gap 15px;
-            margin-bottom 20px;
+        .btn-group { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: var(--text-primary); color: white; }
+        .btn-cancel { background: #ecf0f1; color: #7f8c8d; }
+
+        /* 图例 */
+        .legend {
+            display: flex; gap: 20px; justify-content: center;
+            margin-top: 30px; font-size: 12px; color: #95a5a6;
         }
+        .dot { width: 10px; height: 10px; display: inline-block; margin-right: 5px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>LIFE RECORDER</h1>
+        <div class="subtitle">有些格子是用来奔跑的，有些是用来发呆的</div>
         
-        .btn {
-            background var(--text-primary);
-            color white;
-            border none;
-            padding 10px 20px;
-            border-radius 4px;
-            cursor pointer;
-        }
-        .btn-cancel { background #95a5a6; margin-right 10px; }
+        <div class="controls-wrapper">
+            <div class="config-area">
+                <label>🎂 出生日期：</label>
+                <input type="date" id="dobInput">
+            </div>
+            <button class="data-btn" onclick="exportData()">📥 备份数据 (下载)</button>
+            <button class="data-btn" onclick="triggerImport()">📤 恢复数据 (上传)</button>
+            <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+        </div>
+    </header>
 
-         提示信息 
-        .tooltip-info {
-            font-size 12px;
-            color #666;
-            margin-top 10px;
-            text-align center;
-        }
-    style
-head
-body
-
-div class=container
-    header
-        h1LIFE GRIDh1
-        div class=config-area
-            label你的出生日期：label
-            input type=date id=dobInput
-        div
-    header
-
-    div class=dashboard id=dashboard style=displaynone;
-        div class=stat-card
-            div class=stat-value id=weeksLived0div
-            div class=stat-label已度过的人生 (周)div
-        div
-        div class=stat-card
-            div class=stat-value id=sleepHours0div
-            div class=stat-label已睡了多久 (小时)div
-        div
-        div class=stat-card
-            div class=stat-value highlight id=lifeClock0000div
-            div class=stat-label人生时钟 (假设100岁是24小时)div
-        div
-        div class=stat-card
-            div class=stat-value id=progressPct0%div
-            div class=stat-label百岁人生进度div
-        div
-    div
-
-    div class=tooltip-info id=gridTip请先设置出生日期div
+    <div class="dashboard" id="dashboard" style="display:none;">
+        <div class="stat-card">
+            <div class="stat-value" id="daysLived">0</div>
+            <div class="stat-label">在这个世界 (天)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="weeksLived">0</div>
+            <div class="stat-label">已度过 (周)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="sleepHours">0</div>
+            <div class="stat-label">已睡眠 (小时)</div>
+        </div>
+        <div class="stat-card" style="grid-column: span 1;">
+            <div class="stat-value highlight-clock" id="lifeClock">00:00</div>
+            <div class="stat-label">人生时钟 (24h制)</div>
+            <div class="clock-msg" id="clockMsg">...</div>
+        </div>
+    </div>
     
-    div class=life-grid id=gridContainerdiv
-div
+    <div class="life-grid" id="gridContainer"></div>
 
-div class=modal id=noteModal
-    div class=modal-content
-        h3 id=modalTitle第 X 周h3
-        p style=font-size12px; color#666;这周发生了什么值得记住的事？p
+    <div class="legend">
+        <span><span class="dot" style="background:var(--mood-happy)"></span>开心时刻</span>
+        <span><span class="dot" style="background:var(--mood-hard)"></span>艰难时刻</span>
+        <span><span class="dot" style="background:var(--grid-past)"></span>平淡岁月</span>
+        <span><span class="dot" style="border:1px solid #ccc"></span>未来</span>
+    </div>
+</div>
+
+<div class="modal" id="noteModal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="margin-top:0; color:#2c3e50;">第 X 周</h3>
+        <p style="font-size:13px; color:#95a5a6;">这周过得怎么样？给这个格子填上颜色吧。</p>
         
-        textarea id=weekNote placeholder=记录下这个瞬间...textarea
+        <textarea id="weekNote" placeholder="记录：第一次看海、换了新工作、或者只是发了一下午呆..."></textarea>
         
-        div class=emotion-selector
-            labelinput type=radio name=mood value=normal checked 平淡(灰)label
-            labelinput type=radio name=mood value=happy 开心(黄)label
-            labelinput type=radio name=mood value=hard 艰难(深灰)label
-        div
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <label style="cursor:pointer;"><input type="radio" name="mood" value="normal" checked> ☁️ 平淡</label>
+            <label style="cursor:pointer;"><input type="radio" name="mood" value="happy"> ☀️ 开心</label>
+            <label style="cursor:pointer;"><input type="radio" name="mood" value="hard"> 🌧️ 艰难</label>
+        </div>
 
-        div style=text-align right;
-            button class=btn btn-cancel onclick=closeModal()取消button
-            button class=btn onclick=saveWeekData()保存记录button
-        div
-    div
-div
+        <div class="btn-group">
+            <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveWeekData()">保存</button>
+        </div>
+    </div>
+</div>
 
-script
-     配置：100岁
+<script>
     const TOTAL_YEARS = 100;
     const WEEKS_PER_YEAR = 52;
-    const TOTAL_WEEKS = TOTAL_YEARS  WEEKS_PER_YEAR;
+    const TOTAL_WEEKS = TOTAL_YEARS * WEEKS_PER_YEAR;
 
     const dobInput = document.getElementById('dobInput');
     const gridContainer = document.getElementById('gridContainer');
     const modal = document.getElementById('noteModal');
     let currentSelectedWeek = null;
 
-     数据存储结构：key=weekIndex, value={note , mood }
-    let lifeData = JSON.parse(localStorage.getItem('lifeData'))  {};
+    // --- 核心逻辑 ---
 
-     初始化
+    // 读取本地存储
+    let lifeData = JSON.parse(localStorage.getItem('lifeData')) || {};
+
     function init() {
         const savedDob = localStorage.getItem('lifeDob');
         if (savedDob) {
@@ -237,83 +261,81 @@ script
             renderLife();
         }
         
-        dobInput.addEventListener('change', () = {
+        dobInput.addEventListener('change', () => {
+            // 自动保存出生日期
             localStorage.setItem('lifeDob', dobInput.value);
             renderLife();
         });
     }
 
-     核心渲染函数
+    function getLifeMessage(hour) {
+        if (hour < 6) return "人生还在凌晨，世界还在沉睡，未来充满无限可能。";
+        if (hour < 9) return "早上好！这是人生最有活力的早晨，去探索吧。";
+        if (hour < 12) return "上午时光，精力充沛，是深耕和积累的黄金期。";
+        if (hour < 14) return "正午艳阳高照，你正处于人生的光辉时刻。";
+        if (hour < 18) return "下午茶时间，成熟而从容，享受收获的季节。";
+        if (hour < 22) return "傍晚的夕阳最美，智慧和安宁是此刻的礼物。";
+        return "深夜静谧，回望来路，繁星点点皆是故事。";
+    }
+
     function renderLife() {
         const dob = new Date(dobInput.value);
         if (isNaN(dob.getTime())) return;
 
         const now = new Date();
-        const diffTime = Math.abs(now - dob);
-        const daysLived = Math.ceil(diffTime  (1000  60  60  24));
-        const weeksLived = Math.floor(daysLived  7);
-
-         更新仪表盘
+        const diffTime = now - dob;
+        const daysLived = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const weeksLived = Math.floor(daysLived / 7);
+        
         document.getElementById('dashboard').style.display = 'grid';
+        document.getElementById('daysLived').innerText = daysLived.toLocaleString();
         document.getElementById('weeksLived').innerText = weeksLived.toLocaleString();
-        document.getElementById('sleepHours').innerText = (daysLived  8).toLocaleString();  假设睡8小时
-        document.getElementById('progressPct').innerText = ((weeksLived  TOTAL_WEEKS)  100).toFixed(1) + '%';
-        document.getElementById('gridTip').innerText = '每一行代表1年，每一格代表1周。点击格子记录你的故事。';
-        
-         计算人生时钟
-        const lifePercent = daysLived  (TOTAL_YEARS  365.25); 
-        const totalMinutes = 24  60; 
-        const currentMinutes = totalMinutes  lifePercent;
-        const clockHours = Math.floor(currentMinutes  60);
-        const clockMins = Math.floor(currentMinutes % 60);
-        const timeStr = `${String(clockHours).padStart(2, '0')}${String(clockMins).padStart(2, '0')}`;
-        document.getElementById('lifeClock').innerText = timeStr;
+        document.getElementById('sleepHours').innerText = (daysLived * 8).toLocaleString();
 
-         生成格子
-        gridContainer.innerHTML = '';
+        const lifePercentage = daysLived / (TOTAL_YEARS * 365.25);
+        const totalMinutesInDay = 24 * 60;
+        const currentLifeMinutes = totalMinutesInDay * lifePercentage;
+        const clockHour = Math.floor(currentLifeMinutes / 60);
+        const clockMinute = Math.floor(currentLifeMinutes % 60);
         
-        for (let i = 0; i  TOTAL_WEEKS; i++) {
+        const timeStr = `${String(clockHour).padStart(2, '0')}:${String(clockMinute).padStart(2, '0')}`;
+        document.getElementById('lifeClock').innerText = timeStr;
+        document.getElementById('clockMsg').innerText = getLifeMessage(clockHour);
+
+        gridContainer.innerHTML = '';
+        for (let i = 0; i < TOTAL_WEEKS; i++) {
             const div = document.createElement('div');
             div.classList.add('week-box');
             
-             样式逻辑
-            if (i  weeksLived) {
-                div.classList.add('past');  过去的时间
-                
-                 检查是否有记录
+            if (i < weeksLived) {
+                div.classList.add('past');
                 if (lifeData[i]) {
                     if (lifeData[i].mood === 'happy') div.classList.add('happy');
                     if (lifeData[i].mood === 'hard') div.classList.add('hard');
-                    div.title = lifeData[i].note;  鼠标悬停显示笔记
+                    div.title = lifeData[i].note || '无记录';
                 }
             }
             
-             点击事件
-            div.onclick = () = openModal(i, i  weeksLived);
-            
+            div.onclick = () => openModal(i);
             gridContainer.appendChild(div);
         }
     }
 
-     打开弹窗
-    function openModal(weekIndex, isPast) {
-         如果是未来，也可以记录，或者你可以限制只能记录过去
+    function openModal(weekIndex) {
         currentSelectedWeek = weekIndex;
-        const year = Math.floor(weekIndex  52);
-        const week = weekIndex % 52 + 1;
+        const year = Math.floor(weekIndex / 52);
+        const week = (weekIndex % 52) + 1;
         
         document.getElementById('modalTitle').innerText = `${year}岁 · 第 ${week} 周`;
         
-         加载已有数据
-        const data = lifeData[weekIndex]  { note '', mood 'normal' };
+        const data = lifeData[weekIndex] || { note: '', mood: 'normal' };
         document.getElementById('weekNote').value = data.note;
         
-         设置单选框
         const radios = document.getElementsByName('mood');
         for (let r of radios) {
-            if (r.value === data.mood) r.checked = true;
+            r.checked = (r.value === data.mood);
         }
-
+        
         modal.style.display = 'flex';
     }
 
@@ -329,25 +351,89 @@ script
             if (r.checked) mood = r.value;
         }
 
-         保存到内存
+        // 保存到内存
         lifeData[currentSelectedWeek] = { note, mood };
-        
-         保存到本地存储
+        // 自动保存到 LocalStorage
         localStorage.setItem('lifeData', JSON.stringify(lifeData));
         
         closeModal();
-        renderLife();  重新渲染以更新颜色
+        renderLife();
     }
 
-     点击弹窗外部关闭
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
+    // --- 备份与恢复功能 ---
+
+    // 1. 导出数据 (下载JSON)
+    function exportData() {
+        const dob = localStorage.getItem('lifeDob');
+        if (!dob) {
+            alert('请先设置出生日期再备份哦！');
+            return;
         }
+
+        const exportObj = {
+            version: "1.0",
+            dob: dob,
+            records: lifeData,
+            exportDate: new Date().toISOString()
+        };
+
+        const dataStr = JSON.stringify(exportObj, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `my_life_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 2. 触发上传文件
+    function triggerImport() {
+        document.getElementById('importFile').click();
+    }
+
+    // 3. 读取并恢复数据
+    function importData(inputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                // 简单的校验
+                if (!data.dob && !data.records) {
+                    throw new Error("格式不对");
+                }
+
+                if (confirm('确定要导入这份数据吗？这将覆盖当前的记录。')) {
+                    if(data.dob) localStorage.setItem('lifeDob', data.dob);
+                    if(data.records) {
+                        lifeData = data.records;
+                        localStorage.setItem('lifeData', JSON.stringify(lifeData));
+                    }
+                    alert('数据恢复成功！页面将刷新。');
+                    location.reload();
+                }
+            } catch (err) {
+                alert('恢复失败：文件格式看起来不对，请确保上传的是备份出的JSON文件。');
+            }
+        };
+        reader.readAsText(file);
+        // 清空input，防止同名文件无法再次触发change
+        inputElement.value = '';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) closeModal();
     }
 
     init();
-script
+</script>
 
-body
-html
+</body>
+</html>
